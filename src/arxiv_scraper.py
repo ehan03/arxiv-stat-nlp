@@ -76,6 +76,8 @@ class ArXivScraper:
         if os.path.exists(self.save_path):
             raw_data = pd.read_csv(self.save_path)
         else:
+            # We recommend not redownloading the data, as it takes several hours
+            # and the arXiv API is very brittle
             dfs = []
             for category in self.categories:
                 df = self.get_papers_by_category(category)
@@ -90,6 +92,10 @@ class ArXivScraper:
 
         raw_data = raw_data.drop(columns=["Publish Date"])
         train_df, test_df = self.create_train_test_sets(raw_data)
+
+        train_df["Abstract"] = train_df["Abstract"].apply(lambda x: " ".join(x.split()))
+        test_df["Abstract"] = test_df["Abstract"].apply(lambda x: " ".join(x.split()))
+
         train_df.to_csv(
             os.path.join(os.path.dirname(__file__), "data", "train.csv"), index=False
         )
