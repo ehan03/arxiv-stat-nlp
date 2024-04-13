@@ -1,10 +1,12 @@
 # standard library imports
 import os
 import time
+from typing import Tuple
 
 # third party imports
 import arxiv
 import pandas as pd
+from sklearn.model_selection import train_test_split
 from tqdm import tqdm
 
 # local imports
@@ -63,12 +65,34 @@ class ArXivScraper:
 
         return df
 
-    def __call__(self) -> None:
-        dfs = []
-        for category in self.categories:
-            df = self.get_papers_by_category(category)
-            dfs.append(df)
-            time.sleep(30)
+    def create_train_test_sets(
+        self, raw_data: pd.DataFrame
+    ) -> Tuple[pd.DataFrame, pd.DataFrame]:
+        train_df, test_df = train_test_split(raw_data, test_size=0.3, random_state=42)
 
-        raw_data = pd.concat(dfs).sort_values(by=["Publish Date"])
-        raw_data.to_csv(self.save_path, index=False)
+        return train_df, test_df
+
+    def __call__(self) -> None:
+        if os.path.exists(self.save_path):
+            raw_data = pd.read_csv(self.save_path)
+        else:
+            dfs = []
+            for category in self.categories:
+                df = self.get_papers_by_category(category)
+                dfs.append(df)
+                time.sleep(30)
+
+            raw_data = pd.concat(dfs).sort_values(by=["Publish Date"])
+            raw_data = raw_data.drop_duplicates(
+                keep="first", subset=["Title", "Abstract"]
+            )
+            raw_data.to_csv(self.save_path, index=False)
+
+        raw_data = raw_data.drop(columns=["Publish Date"])
+        train_df, test_df = self.create_train_test_sets(raw_data)
+        train_df.to_csv(
+            os.path.join(os.path.dirname(__file__), "data", "train.csv"), index=False
+        )
+        test_df.to_csv(
+            os.path.join(os.path.dirname(__file__), "data", "test.csv"), index=False
+        )
