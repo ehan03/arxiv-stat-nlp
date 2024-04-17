@@ -1,0 +1,5 @@
+Due to the large sizes of the pretrained and fine-tuned models (SPECTER2 and RoBERTa), we are unable to provide them in the repository. However, the code for training can be found in the corresponding notebooks. 
+
+Specifically for the SPECTER2 and logistic regression pipeline, we are mixing objects from the `transformers` and `sklearn` libraries, which makes it difficult to save the pipeline in a single file as pickling is not possible, unlike for the TF-IDF with linear SVC pipeline.
+
+As for the RoBERTa-based models (baseline and fine-tuned), the model checkpoint files can be found at [this Google Drive link](https://drive.google.com/drive/folders/1ryE379gpl3f91cRpio6zviJEHCU0RYn3?usp=drive_link). These files can be downloaded and placed in the `models` directory. Doing so will allow the user to load the models and reproduce the results in the notebooks without having to train from scratch.
