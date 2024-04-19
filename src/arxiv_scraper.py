@@ -21,7 +21,15 @@ class ArXivScraper:
             "stat.ME",
             "stat.TH",
         ]
-        self.save_path = os.path.join(os.path.dirname(__file__), "data", "raw_data.csv")
+        self.raw_data_path = os.path.join(
+            os.path.dirname(__file__), "..", "..", "data", "raw_data.csv"
+        )
+        self.train_path = os.path.join(
+            os.path.dirname(__file__), "..", "..", "data", "train.csv"
+        )
+        self.test_path = os.path.join(
+            os.path.dirname(__file__), "..", "..", "data", "test.csv"
+        )
 
     def get_papers_by_category(self, category: str) -> pd.DataFrame:
         client = arxiv.Client(
@@ -73,8 +81,8 @@ class ArXivScraper:
         return train_df, test_df
 
     def __call__(self) -> None:
-        if os.path.exists(self.save_path):
-            raw_data = pd.read_csv(self.save_path)
+        if os.path.exists(self.raw_data_path):
+            raw_data = pd.read_csv(self.raw_data_path)
         else:
             # We recommend not redownloading the data, as it takes several hours
             # and the arXiv API is very brittle
@@ -88,7 +96,7 @@ class ArXivScraper:
             raw_data = raw_data.drop_duplicates(
                 keep="first", subset=["Title", "Abstract"]
             )
-            raw_data.to_csv(self.save_path, index=False)
+            raw_data.to_csv(self.raw_data_path, index=False)
 
         raw_data = raw_data.drop(columns=["Publish Date"])
         train_df, test_df = self.create_train_test_sets(raw_data)
@@ -96,9 +104,5 @@ class ArXivScraper:
         train_df["Abstract"] = train_df["Abstract"].apply(lambda x: " ".join(x.split()))
         test_df["Abstract"] = test_df["Abstract"].apply(lambda x: " ".join(x.split()))
 
-        train_df.to_csv(
-            os.path.join(os.path.dirname(__file__), "data", "train.csv"), index=False
-        )
-        test_df.to_csv(
-            os.path.join(os.path.dirname(__file__), "data", "test.csv"), index=False
-        )
+        train_df.to_csv(self.train_path, index=False)
+        test_df.to_csv(self.test_path, index=False)
