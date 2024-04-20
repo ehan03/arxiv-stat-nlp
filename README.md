@@ -3,4 +3,11 @@
 Team Members: Eugene Han, Ali Aldous, Elder Veliz
 
 ## Setup
-Python 3.10.13
+1. Clone the repository.
+2. Create a new conda environment with the following command:
+```
+conda env create -f env.yml
+```
+3. Download the baseline and fine-tuned RoBERTa models from [this link](https://drive.google.com/drive/folders/1ryE379gpl3f91cRpio6zviJEHCU0RYn3?usp=drive_link).
+4. Place the downloaded models in the `models` directory.
+5. Run the cells of `full_pipeline.ipynb`. We recommend skipping the training cells as the models are already trained and saved in the `models` directory and the training process is time-consuming and resource-intensive.
