@@ -1,5 +1,6 @@
 # CPSC 477 Final Project
 
+### *Predicting Primary Sub-Categories of Statistics ArXiv Papers*
 Team Members: Eugene Han, Ali Aldous, Elder Veliz
 
 ## Setup
