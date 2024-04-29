@@ -31,11 +31,17 @@ class ArXivScraper:
             os.path.dirname(__file__), "..", "..", "data", "test.csv"
         )
 
-    def get_papers_by_category(self, category: str) -> pd.DataFrame:
+    def get_papers_by_category(
+        self, category: str, descending: bool = True
+    ) -> pd.DataFrame:
         client = arxiv.Client(
             page_size=1000,
             delay_seconds=5,
             num_retries=10,
+        )
+
+        sort_order = (
+            arxiv.SortOrder.Descending if descending else arxiv.SortOrder.Ascending
         )
 
         query = f"cat:{category}"
@@ -43,6 +49,7 @@ class ArXivScraper:
             query=query,
             max_results=50000,
             sort_by=arxiv.SortCriterion.SubmittedDate,
+            sort_order=sort_order,
         )
         results = client.results(search)
 
@@ -86,13 +93,26 @@ class ArXivScraper:
         else:
             # We recommend not redownloading the data, as it takes several hours
             # and the arXiv API is very brittle
-            dfs = []
+            dfs_desc = []
             for category in self.categories:
-                df = self.get_papers_by_category(category)
-                dfs.append(df)
+                df_desc = self.get_papers_by_category(
+                    category=category, descending=True
+                )
+                dfs_desc.append(df_desc)
                 time.sleep(30)
 
-            raw_data = pd.concat(dfs).sort_values(by=["Publish Date"])
+            dfs_asc = []
+            for category in self.categories:
+                # We go in ascending order to get the oldest papers first
+                # This is to get any papers that were missed in the descending order
+                # since the API is limited to 50,000 results
+                df_asc = self.get_papers_by_category(
+                    category=category, descending=False
+                )
+                dfs_asc.append(df_asc)
+                time.sleep(30)
+
+            raw_data = pd.concat(dfs_desc + dfs_asc).sort_values(by=["Publish Date"])
             raw_data = raw_data.drop_duplicates(
                 keep="first", subset=["Title", "Abstract"]
             )
@@ -101,8 +121,10 @@ class ArXivScraper:
         raw_data = raw_data.drop(columns=["Publish Date"])
         train_df, test_df = self.create_train_test_sets(raw_data)
 
+        # Preprocess the data
         train_df["Abstract"] = train_df["Abstract"].apply(lambda x: " ".join(x.split()))
         test_df["Abstract"] = test_df["Abstract"].apply(lambda x: " ".join(x.split()))
 
+        # Save the data
         train_df.to_csv(self.train_path, index=False)
         test_df.to_csv(self.test_path, index=False)
